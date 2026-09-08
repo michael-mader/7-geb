@@ -135,23 +135,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           <Phone className="w-5 h-5" />
         </button>
 
-        {/* Fullscreen Toggle (Hide Browser UI) */}
-        {onToggleFullscreen && (
-          <button
-            type="button"
-            aria-label={isFullscreen ? 'Vollbild beenden' : 'Vollbildmodus aktivieren (Browserleiste ausblenden)'}
-            onClick={onToggleFullscreen}
-            className={`p-2 rounded-full transition-colors ${
-              isFullscreen
-                ? 'bg-white/25 text-white shadow-inner'
-                : 'text-white/90 hover:text-white hover:bg-white/10'
-            }`}
-            title={isFullscreen ? 'Vollbild beenden' : 'Vollbildmodus aktivieren (Browserleiste ausblenden)'}
-          >
-            {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-          </button>
-        )}
-
         {/* Overflow Menu */}
         <div className="relative">
           <button

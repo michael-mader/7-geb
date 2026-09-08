@@ -4,6 +4,7 @@ export const CURRENT_CLIENT_VERSION = '1.1.0';
 export const CURRENT_AVATAR_VERSION = 'v2';
 
 export interface VersionInfo {
+  buildId?: string;
   version: string;
   avatarVersion?: string;
   updatedAt?: string;
@@ -42,8 +43,21 @@ export function useAppUpdate() {
   const [isChecking, setIsChecking] = useState<boolean>(false);
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
   const checkedRef = useRef<boolean>(false);
+  const latestBuildIdRef = useRef<string | null>(null);
 
-  const checkForUpdate = useCallback(async (manual: boolean = false) => {
+  const checkForUpdate = useCallback(async () => {
+    // In local development mode, don't trigger the update banner
+    if (import.meta.env.DEV) {
+      setUpdateAvailable(false);
+      return;
+    }
+
+    const runningBuildId = typeof __APP_BUILD_ID__ !== 'undefined' ? __APP_BUILD_ID__ : '';
+    if (!runningBuildId || runningBuildId === 'dev') {
+      setUpdateAvailable(false);
+      return;
+    }
+
     setIsChecking(true);
     try {
       // Use cache-busting query param & cache: 'no-store' to guarantee fresh response
@@ -57,21 +71,20 @@ export function useAppUpdate() {
 
       if (res.ok) {
         const data: VersionInfo = await res.json();
-        const storedVersion = localStorage.getItem('schnitzeljagd_app_version');
-        const storedAvatarVersion = localStorage.getItem('schnitzeljagd_avatar_version');
+        latestBuildIdRef.current = data.buildId || null;
 
-        const hasNewVersion =
-          (data.version && data.version !== CURRENT_CLIENT_VERSION) ||
-          (data.avatarVersion && data.avatarVersion !== CURRENT_AVATAR_VERSION) ||
-          (storedVersion && storedVersion !== data.version) ||
-          (storedAvatarVersion && storedAvatarVersion !== data.avatarVersion);
+        // If the server's buildId is different from the currently running bundle's buildId
+        const isDifferentBuild = Boolean(
+          data.buildId &&
+          data.buildId !== 'dev' &&
+          data.buildId !== runningBuildId
+        );
 
-        if (hasNewVersion) {
+        const dismissedBuild = sessionStorage.getItem('schnitzeljagd_dismissed_build');
+        if (isDifferentBuild && dismissedBuild !== data.buildId) {
           setUpdateAvailable(true);
-        } else if (manual) {
-          // If manually checked and up to date, store current versions
-          localStorage.setItem('schnitzeljagd_app_version', CURRENT_CLIENT_VERSION);
-          localStorage.setItem('schnitzeljagd_avatar_version', CURRENT_AVATAR_VERSION);
+        } else {
+          setUpdateAvailable(false);
         }
       }
     } catch (e) {
@@ -86,23 +99,23 @@ export function useAppUpdate() {
   useEffect(() => {
     if (!checkedRef.current) {
       checkedRef.current = true;
-      checkForUpdate(false);
+      checkForUpdate();
     }
 
     // Check on tab focus or when user returns to phone screen
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        checkForUpdate(false);
+        checkForUpdate();
       }
     };
 
     window.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleVisibilityChange);
 
-    // Periodic check every 45 seconds
+    // Periodic check every 60 seconds
     const interval = setInterval(() => {
-      checkForUpdate(false);
-    }, 45000);
+      checkForUpdate();
+    }, 60000);
 
     return () => {
       window.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -111,9 +124,15 @@ export function useAppUpdate() {
     };
   }, [checkForUpdate]);
 
+  const dismissUpdate = useCallback(() => {
+    setUpdateAvailable(false);
+    if (latestBuildIdRef.current) {
+      sessionStorage.setItem('schnitzeljagd_dismissed_build', latestBuildIdRef.current);
+    }
+  }, []);
+
   const applyUpdate = useCallback(() => {
-    localStorage.setItem('schnitzeljagd_app_version', CURRENT_CLIENT_VERSION);
-    localStorage.setItem('schnitzeljagd_avatar_version', CURRENT_AVATAR_VERSION);
+    setUpdateAvailable(false);
     forceHardReload();
   }, []);
 
@@ -122,6 +141,7 @@ export function useAppUpdate() {
     isChecking,
     lastChecked,
     checkForUpdate,
+    dismissUpdate,
     applyUpdate,
     forceHardReload,
   };

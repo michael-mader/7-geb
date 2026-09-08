@@ -14,3 +14,5 @@ declare module '*.mp3' {
   const src: string;
   export default src;
 }
+
+declare const __APP_BUILD_ID__: string;

@@ -61,9 +61,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     theme === 'telegram' ? 'bg-[#2a76a8] hover:bg-[#23638c]' : 'bg-[#00a884] hover:bg-[#008f6f]';
 
   return (
-    <div className={`${containerBg} p-2 sm:p-2.5 z-20 select-none relative transition-colors duration-200`}>
+    <div className={`${containerBg} p-2 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:p-2.5 sm:pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 select-none relative transition-colors duration-200`}>
       {/* Quick Suggestion Chips for Kids */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none text-xs">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none text-xs">
         <span className="text-gray-400 dark:text-gray-500 font-medium shrink-0 flex items-center gap-1 pl-1">
           <Sparkles className="w-3 h-3 text-amber-500" />
           <span>Schnell:</span>

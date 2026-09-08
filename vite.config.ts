@@ -3,16 +3,18 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, Plugin} from 'vite';
 
-const versionPlugin = (): Plugin => {
+const BUILD_TIMESTAMP = Date.now().toString();
+
+const versionPlugin = (buildId: string): Plugin => {
   return {
     name: 'version-emit-plugin',
     generateBundle() {
-      const buildId = Date.now().toString();
       this.emitFile({
         type: 'asset',
         fileName: 'version.json',
         source: JSON.stringify({
-          version: `1.1.0-${buildId}`,
+          buildId,
+          version: '1.1.0',
           avatarVersion: 'v2',
           updatedAt: new Date().toISOString(),
         }),
@@ -24,7 +26,10 @@ const versionPlugin = (): Plugin => {
 export default defineConfig(() => {
   return {
     base: './',
-    plugins: [react(), tailwindcss(), versionPlugin()],
+    define: {
+      __APP_BUILD_ID__: JSON.stringify(BUILD_TIMESTAMP),
+    },
+    plugins: [react(), tailwindcss(), versionPlugin(BUILD_TIMESTAMP)],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

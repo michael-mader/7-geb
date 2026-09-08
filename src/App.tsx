@@ -54,7 +54,7 @@ export default function App() {
   const appContainerRef = useRef<HTMLDivElement | null>(null);
   const { isFullscreen, toggleFullscreen, enterFullscreen, isStandalone } = useFullscreen(appContainerRef);
   const { isInstallable, install, isIOS } = usePWAInstall();
-  const { updateAvailable, applyUpdate, forceHardReload } = useAppUpdate();
+  const { updateAvailable, applyUpdate, dismissUpdate } = useAppUpdate();
   const [showInstallGuide, setShowInstallGuide] = useState<boolean>(false);
   const [dismissedFullscreenBanner, setDismissedFullscreenBanner] = useState<boolean>(false);
 
@@ -277,6 +277,23 @@ export default function App() {
             : 'sm:max-w-md md:max-w-lg h-screen sm:h-[94vh] sm:rounded-3xl shadow-2xl border-0 sm:border border-gray-700/50'
         }`}
       >
+        {/* Status Bar Safe Area Spacer */}
+        <div 
+          className="w-full shrink-0 transition-colors duration-200 z-50"
+          style={{
+            height: 'env(safe-area-inset-top)',
+            backgroundColor: (!isFullView && !dismissedFullscreenBanner)
+              ? '#005c4b'
+              : updateAvailable
+              ? '#059669'
+              : settings.theme === 'whatsapp-dark'
+              ? '#1f2c34'
+              : settings.theme === 'telegram'
+              ? '#517da2'
+              : '#008069'
+          }}
+        />
+
         {/* Fullscreen recommendation banner (when in normal browser mode) */}
         {!isFullView && !dismissedFullscreenBanner && (
           <div className="bg-[#005c4b] text-white text-xs px-3 py-1.5 flex items-center justify-between gap-2 shadow-xs shrink-0 select-none z-30">
@@ -304,16 +321,27 @@ export default function App() {
         {updateAvailable && (
           <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs px-3 py-2 flex items-center justify-between gap-2 shadow-md z-40 shrink-0 border-b border-white/10 animate-in slide-in-from-top duration-200">
             <div className="flex items-center gap-2 min-w-0">
-              <Sparkles className="w-4 h-4 text-amber-300 shrink-0 animate-spin" />
-              <span className="font-medium truncate">Neues Update verfügbar (neues Avatar / Inhalte)!</span>
+              <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+              <span className="font-medium truncate">Neues Update verfügbar!</span>
             </div>
-            <button
-              type="button"
-              onClick={applyUpdate}
-              className="bg-white text-emerald-800 hover:bg-emerald-50 px-2.5 py-1 rounded-lg font-bold text-[11px] shrink-0 transition-colors shadow-xs active:scale-95"
-            >
-              Jetzt aktualisieren
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={applyUpdate}
+                className="bg-white text-emerald-800 hover:bg-emerald-50 px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors shadow-xs active:scale-95"
+              >
+                Jetzt aktualisieren
+              </button>
+              <button
+                type="button"
+                aria-label="Update-Hinweis schließen"
+                onClick={dismissUpdate}
+                className="p-1 hover:bg-black/20 rounded text-white/80 hover:text-white transition-colors"
+                title="Später"
+              >
+                <CloseIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         )}
 
