@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, Video, MoreVertical, ChevronLeft, ShieldCheck, Settings, Trash2, HelpCircle } from 'lucide-react';
+import { Phone, Video, MoreVertical, ChevronLeft, ShieldCheck, Settings, Trash2, HelpCircle, Maximize2, Minimize2, Smartphone } from 'lucide-react';
 import mortimerAvatar from '../assets/images/mortimer_morrison_avatar.jpg';
 
 interface ChatHeaderProps {
@@ -12,6 +12,11 @@ interface ChatHeaderProps {
   currentClueIndex: number;
   totalClues: number;
   theme: 'whatsapp' | 'telegram' | 'whatsapp-dark';
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+  onOpenInstallModal?: () => void;
+  canInstall?: boolean;
+  isIOS?: boolean;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -24,6 +29,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   currentClueIndex,
   totalClues,
   theme,
+  isFullscreen = false,
+  onToggleFullscreen,
+  onOpenInstallModal,
+  canInstall = false,
+  isIOS = false,
 }) => {
   const [showMenu, setShowMenu] = React.useState(false);
 
@@ -121,6 +131,23 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           <Phone className="w-5 h-5" />
         </button>
 
+        {/* Fullscreen Toggle (Hide Browser UI) */}
+        {onToggleFullscreen && (
+          <button
+            type="button"
+            aria-label={isFullscreen ? 'Vollbild beenden' : 'Vollbildmodus aktivieren (Browserleiste ausblenden)'}
+            onClick={onToggleFullscreen}
+            className={`p-2 rounded-full transition-colors ${
+              isFullscreen
+                ? 'bg-white/25 text-white shadow-inner'
+                : 'text-white/90 hover:text-white hover:bg-white/10'
+            }`}
+            title={isFullscreen ? 'Vollbild beenden' : 'Vollbildmodus aktivieren (Browserleiste ausblenden)'}
+          >
+            {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+          </button>
+        )}
+
         {/* Overflow Menu */}
         <div className="relative">
           <button
@@ -139,6 +166,43 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                 onClick={() => setShowMenu(false)}
               />
               <div className="absolute right-0 top-full mt-1 w-64 bg-white dark:bg-[#233138] rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-1.5 z-50 text-gray-800 dark:text-gray-100 text-sm animate-in fade-in zoom-in-95 duration-100">
+                {onToggleFullscreen && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onToggleFullscreen();
+                    }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2.5 text-emerald-700 dark:text-emerald-400 font-medium"
+                  >
+                    {isFullscreen ? (
+                      <>
+                        <Minimize2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <span>Vollbild beenden</span>
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <span>Vollbild (ohne Browserleiste)</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {onOpenInstallModal && (canInstall || isIOS) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onOpenInstallModal();
+                    }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2.5"
+                  >
+                    <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Auf Startbildschirm speichern</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {

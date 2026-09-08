@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Lock, Sparkles, Compass, PartyPopper, RotateCcw } from 'lucide-react';
+import { Lock, Sparkles, Compass, PartyPopper, RotateCcw, Maximize2, X as CloseIcon } from 'lucide-react';
 import { ChatMessage, HuntSettings, AudioUploadMap } from './types';
 import { ChatHeader } from './components/ChatHeader';
 import { VoiceMessageBubble } from './components/VoiceMessageBubble';
@@ -10,6 +10,9 @@ import { ContactProfileModal } from './components/ContactProfileModal';
 import { OrganizerModal } from './components/OrganizerModal';
 import { CallModal } from './components/CallModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
+import { InstallGuideModal } from './components/InstallGuideModal';
+import { useFullscreen } from './utils/useFullscreen';
+import { usePWAInstall } from './utils/usePWAInstall';
 import {
   getStoredSettings,
   saveSettings,
@@ -45,6 +48,13 @@ export default function App() {
 
   const [headerStatus, setHeaderStatus] = useState<string>('online');
   const [isBusy, setIsBusy] = useState<boolean>(false);
+
+  // Fullscreen and PWA hooks
+  const appContainerRef = useRef<HTMLDivElement | null>(null);
+  const { isFullscreen, toggleFullscreen, enterFullscreen, isStandalone } = useFullscreen(appContainerRef);
+  const { isInstallable, install, isIOS } = usePWAInstall();
+  const [showInstallGuide, setShowInstallGuide] = useState<boolean>(false);
+  const [dismissedFullscreenBanner, setDismissedFullscreenBanner] = useState<boolean>(false);
 
   // Modals & Feedback
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
@@ -246,10 +256,48 @@ export default function App() {
       ? 'telegram-chat-bg'
       : 'whatsapp-chat-bg';
 
+  const isFullView = isFullscreen || isStandalone;
+
   return (
-    <div className="flex justify-center items-center w-full min-h-screen bg-neutral-900 sm:p-4 md:p-6 select-text">
+    <div
+      ref={appContainerRef}
+      className={`flex justify-center items-center w-full select-text transition-all duration-200 ${
+        isFullView
+          ? 'h-screen h-[100dvh] bg-black overflow-hidden p-0'
+          : 'min-h-screen bg-neutral-900 sm:p-4 md:p-6'
+      }`}
+    >
       {/* Mobile-sized WhatsApp Phone Container */}
-      <div className="w-full sm:max-w-md md:max-w-lg h-screen sm:h-[92vh] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col relative border-0 sm:border border-gray-700/50 bg-white dark:bg-[#0b141a]">
+      <div
+        className={`w-full flex flex-col relative overflow-hidden bg-white dark:bg-[#0b141a] transition-all duration-200 ${
+          isFullView
+            ? 'h-screen h-[100dvh] max-w-xl md:max-w-2xl shadow-none border-0'
+            : 'sm:max-w-md md:max-w-lg h-screen sm:h-[94vh] sm:rounded-3xl shadow-2xl border-0 sm:border border-gray-700/50'
+        }`}
+      >
+        {/* Fullscreen recommendation banner (when in normal browser mode) */}
+        {!isFullView && !dismissedFullscreenBanner && (
+          <div className="bg-[#005c4b] text-white text-xs px-3 py-1.5 flex items-center justify-between gap-2 shadow-xs shrink-0 select-none z-30">
+            <button
+              type="button"
+              onClick={enterFullscreen}
+              className="flex items-center gap-2 hover:text-emerald-200 font-medium text-left flex-1 min-w-0 truncate"
+              title="Browserleiste ausblenden für ein echtes Vollbild-Erlebnis"
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+              <span className="truncate">Tipp: <strong>Vollbild aktivieren</strong> (Browserleiste ausblenden)</span>
+            </button>
+            <button
+              type="button"
+              aria-label="Hinweis schließen"
+              onClick={() => setDismissedFullscreenBanner(true)}
+              className="p-1 hover:bg-black/20 rounded text-emerald-200 hover:text-white shrink-0"
+            >
+              <CloseIcon className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Chat Header */}
         <ChatHeader
           statusText={headerStatus}
@@ -261,6 +309,11 @@ export default function App() {
           currentClueIndex={clueIndex}
           totalClues={settings.totalClues}
           theme={settings.theme}
+          isFullscreen={isFullView}
+          onToggleFullscreen={toggleFullscreen}
+          onOpenInstallModal={() => setShowInstallGuide(true)}
+          canInstall={isInstallable}
+          isIOS={isIOS}
         />
 
         {/* Transient Reset / Notification Toast */}
@@ -369,6 +422,15 @@ export default function App() {
           isOpen={showResetConfirmModal}
           onClose={() => setShowResetConfirmModal(false)}
           onConfirm={handleResetHunt}
+        />
+
+        {/* Fullscreen / PWA Install Guide Modal */}
+        <InstallGuideModal
+          isOpen={showInstallGuide}
+          onClose={() => setShowInstallGuide(false)}
+          isIOS={isIOS}
+          canInstallPrompt={isInstallable}
+          onTriggerInstall={install}
         />
       </div>
     </div>
