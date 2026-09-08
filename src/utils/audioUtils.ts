@@ -25,16 +25,41 @@ export function generateWaveform(seed: number = 42, count: number = 36): number[
   return bars;
 }
 
+const audioCache: Record<string, HTMLAudioElement> = {};
+
+// Helper to get or create cached audio
+function getCachedAudio(type: 'sent' | 'incoming'): HTMLAudioElement {
+  if (audioCache[type]) {
+    // Reset time if it's already playing
+    audioCache[type].currentTime = 0;
+    return audioCache[type];
+  }
+
+  const audio = new Audio();
+  const basePath = import.meta.env.BASE_URL || './';
+  const cleanBase = basePath.endsWith('/') ? basePath : `${basePath}/`;
+  audio.src = `${cleanBase}${type}.mp3`;
+  audio.volume = 0.7;
+  audio.preload = 'auto'; // Force browser to preload it
+  
+  audioCache[type] = audio;
+  return audio;
+}
+
+// Preload the sounds immediately when the module is imported in the browser
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    getCachedAudio('sent');
+    getCachedAudio('incoming');
+  }, 500); // Small delay to prioritize page load
+}
+
 // Play notification sound for incoming or sent message
 export function playNotificationSound(type: 'sent' | 'incoming', enabled: boolean = true) {
   if (!enabled) return;
 
   try {
-    const audio = new Audio();
-    const basePath = import.meta.env.BASE_URL || './';
-    const cleanBase = basePath.endsWith('/') ? basePath : `${basePath}/`;
-    audio.src = `${cleanBase}${type}.mp3`;
-    audio.volume = 0.7;
+    const audio = getCachedAudio(type);
 
     const playPromise = audio.play();
     if (playPromise !== undefined) {

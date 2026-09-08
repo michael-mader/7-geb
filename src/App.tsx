@@ -25,6 +25,7 @@ import {
   DEFAULT_SETTINGS,
 } from './utils/storage';
 import { playNotificationSound } from './utils/audioUtils';
+import { triggerHapticFeedback } from './utils/haptics';
 
 // Initial greeting message from Mortimer
 const createInitialMessages = (timeStr?: string): ChatMessage[] => [
@@ -113,6 +114,7 @@ export default function App() {
     // 1. Append user message
     setMessages((prev) => [...prev, userMessage]);
     playNotificationSound('sent', settings.soundEffects);
+    triggerHapticFeedback('sent');
     setIsBusy(true);
 
     // 2. After short delay, mark as read (double blue ticks)
@@ -154,6 +156,7 @@ export default function App() {
 
       setMessages((prev) => [...prev, mortimerVoiceMessage]);
       playNotificationSound('incoming', settings.soundEffects);
+      triggerHapticFeedback('incoming');
       setHeaderStatus('online');
       setIsBusy(false);
 
