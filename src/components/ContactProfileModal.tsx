@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Phone, Video, ShieldCheck, MapPin, Sparkles, Mic, Calendar, Heart } from 'lucide-react';
-import mortimerAvatar from '../assets/images/mortimer_morrison_avatar.jpg';
+import { mortimerAvatar } from '../constants/avatar';
 
 interface ContactProfileModalProps {
   onClose: () => void;

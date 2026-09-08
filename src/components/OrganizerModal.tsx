@@ -13,7 +13,8 @@ import {
   HelpCircle,
   Palette,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import { HuntSettings, AudioUploadMap } from '../types';
 import { resolveAudioSource } from '../utils/audioUtils';
@@ -28,6 +29,7 @@ interface OrganizerModalProps {
   audioUploads: AudioUploadMap;
   onUploadCustomAudio: (clueNumber: number, file: File) => void;
   onClearCustomAudio: (clueNumber: number) => void;
+  onHardReload?: () => void;
 }
 
 export const OrganizerModal: React.FC<OrganizerModalProps> = ({
@@ -40,6 +42,7 @@ export const OrganizerModal: React.FC<OrganizerModalProps> = ({
   audioUploads,
   onUploadCustomAudio,
   onClearCustomAudio,
+  onHardReload,
 }) => {
   const [activeTab, setActiveTab] = useState<'clues' | 'audio' | 'github' | 'settings'>('clues');
   const [testingAudioIndex, setTestingAudioIndex] = useState<number | null>(null);
@@ -480,6 +483,26 @@ export const OrganizerModal: React.FC<OrganizerModalProps> = ({
                   placeholder="z. B. Detektive Leo & Emma"
                 />
               </div>
+
+              {/* Cache Purge & App Update Button */}
+              {onHardReload && (
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <span className="text-xs font-semibold block text-gray-800 dark:text-gray-200 mb-1">
+                    Zwischenspeicher (Cache) aktualisieren
+                  </span>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2">
+                    Falls auf dem Smartphone noch ein altes Profilbild oder alte Audios gecacht sind:
+                  </p>
+                  <button
+                    type="button"
+                    onClick={onHardReload}
+                    className="w-full py-2 px-3 rounded-xl border border-emerald-600/40 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-xs font-medium flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Cache leeren & App frisch neu laden</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

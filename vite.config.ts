@@ -1,12 +1,30 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, Plugin} from 'vite';
+
+const versionPlugin = (): Plugin => {
+  return {
+    name: 'version-emit-plugin',
+    generateBundle() {
+      const buildId = Date.now().toString();
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: JSON.stringify({
+          version: `1.1.0-${buildId}`,
+          avatarVersion: 'v2',
+          updatedAt: new Date().toISOString(),
+        }),
+      });
+    },
+  };
+};
 
 export default defineConfig(() => {
   return {
     base: './',
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), versionPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

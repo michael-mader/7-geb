@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PhoneOff, Mic, Video, Volume2, Sparkles } from 'lucide-react';
-import mortimerAvatar from '../assets/images/mortimer_morrison_avatar.jpg';
+import { mortimerAvatar } from '../constants/avatar';
 
 interface CallModalProps {
   isVideo: boolean;

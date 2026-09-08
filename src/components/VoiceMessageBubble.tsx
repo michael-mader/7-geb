@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Mic, Volume2, AlertCircle, Sparkles } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { formatTime, generateWaveform, resolveAudioSource } from '../utils/audioUtils';
-import mortimerAvatar from '../assets/images/mortimer_morrison_avatar.jpg';
+import { mortimerAvatar } from '../constants/avatar';
 
 interface VoiceMessageBubbleProps {
   message: ChatMessage;

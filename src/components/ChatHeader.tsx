@@ -1,6 +1,6 @@
 import React from 'react';
-import { Phone, Video, MoreVertical, ChevronLeft, ShieldCheck, Settings, Trash2, HelpCircle, Maximize2, Minimize2, Smartphone } from 'lucide-react';
-import mortimerAvatar from '../assets/images/mortimer_morrison_avatar.jpg';
+import { Phone, Video, MoreVertical, ChevronLeft, ShieldCheck, Settings, Trash2, HelpCircle, Maximize2, Minimize2, Smartphone, RefreshCw } from 'lucide-react';
+import { mortimerAvatar } from '../constants/avatar';
 
 interface ChatHeaderProps {
   statusText: string;
@@ -17,6 +17,8 @@ interface ChatHeaderProps {
   onOpenInstallModal?: () => void;
   canInstall?: boolean;
   isIOS?: boolean;
+  onHardReload?: () => void;
+  updateAvailable?: boolean;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -34,6 +36,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onOpenInstallModal,
   canInstall = false,
   isIOS = false,
+  onHardReload,
+  updateAvailable = false,
 }) => {
   const [showMenu, setShowMenu] = React.useState(false);
 
@@ -226,6 +230,23 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                   <Settings className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>Spielleiter / Hinweise einstellen</span>
                 </button>
+
+                {onHardReload && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onHardReload();
+                    }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 flex items-center gap-2.5"
+                  >
+                    <RefreshCw className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>App aktualisieren & Cache leeren</span>
+                    {updateAvailable && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping ml-auto" />
+                    )}
+                  </button>
+                )}
 
                 <div className="h-px bg-gray-100 dark:bg-gray-700 my-1" />
 

@@ -13,6 +13,7 @@ import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { InstallGuideModal } from './components/InstallGuideModal';
 import { useFullscreen } from './utils/useFullscreen';
 import { usePWAInstall } from './utils/usePWAInstall';
+import { useAppUpdate } from './utils/useAppUpdate';
 import {
   getStoredSettings,
   saveSettings,
@@ -53,6 +54,7 @@ export default function App() {
   const appContainerRef = useRef<HTMLDivElement | null>(null);
   const { isFullscreen, toggleFullscreen, enterFullscreen, isStandalone } = useFullscreen(appContainerRef);
   const { isInstallable, install, isIOS } = usePWAInstall();
+  const { updateAvailable, applyUpdate, forceHardReload } = useAppUpdate();
   const [showInstallGuide, setShowInstallGuide] = useState<boolean>(false);
   const [dismissedFullscreenBanner, setDismissedFullscreenBanner] = useState<boolean>(false);
 
@@ -298,6 +300,23 @@ export default function App() {
           </div>
         )}
 
+        {/* Update Notification Banner */}
+        {updateAvailable && (
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs px-3 py-2 flex items-center justify-between gap-2 shadow-md z-40 shrink-0 border-b border-white/10 animate-in slide-in-from-top duration-200">
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles className="w-4 h-4 text-amber-300 shrink-0 animate-spin" />
+              <span className="font-medium truncate">Neues Update verfügbar (neues Avatar / Inhalte)!</span>
+            </div>
+            <button
+              type="button"
+              onClick={applyUpdate}
+              className="bg-white text-emerald-800 hover:bg-emerald-50 px-2.5 py-1 rounded-lg font-bold text-[11px] shrink-0 transition-colors shadow-xs active:scale-95"
+            >
+              Jetzt aktualisieren
+            </button>
+          </div>
+        )}
+
         {/* Chat Header */}
         <ChatHeader
           statusText={headerStatus}
@@ -314,6 +333,8 @@ export default function App() {
           onOpenInstallModal={() => setShowInstallGuide(true)}
           canInstall={isInstallable}
           isIOS={isIOS}
+          onHardReload={applyUpdate}
+          updateAvailable={updateAvailable}
         />
 
         {/* Transient Reset / Notification Toast */}
@@ -406,6 +427,7 @@ export default function App() {
             audioUploads={audioUploads}
             onUploadCustomAudio={handleUploadCustomAudio}
             onClearCustomAudio={handleClearCustomAudio}
+            onHardReload={applyUpdate}
           />
         )}
 
