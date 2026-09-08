@@ -1,0 +1,6 @@
+{
+  "name": "Schnitzeljagd Sprach-Chat",
+  "description": "Eine WhatsApp-Style Chat-App mit Sprachnachrichten von Mortimer Morrison für eine Kindergeburtstags-Schnitzeljagd.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
