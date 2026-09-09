@@ -218,22 +218,22 @@ export const OrganizerModal: React.FC<OrganizerModalProps> = ({
               {/* Quick Jump Buttons */}
               <div>
                 <span className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                  Direkt zu einem Hinweis springen:
+                  Direkt zu einem Hinweis springen (1 bis {settings.totalClues}):
                 </span>
-                <div className="grid grid-cols-5 gap-2">
-                  {[1, 2, 3, 4, 5].map((num) => (
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-56 overflow-y-auto p-1 bg-gray-50/50 dark:bg-gray-900/30 rounded-xl border border-gray-100 dark:border-gray-800/80">
+                  {Array.from({ length: settings.totalClues || 20 }, (_, i) => i + 1).map((num) => (
                     <button
                       key={num}
                       type="button"
                       onClick={() => onSetClueIndex(num)}
-                      className={`py-2 px-1 rounded-xl text-center font-medium text-xs border transition-all ${
+                      className={`py-1.5 px-1 rounded-lg text-center font-medium text-xs border transition-all ${
                         currentClueIndex === num
-                          ? 'bg-[#008069] text-white border-[#008069] shadow-sm'
-                          : 'bg-gray-50 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                          ? 'bg-[#008069] text-white border-[#008069] shadow-xs'
+                          : 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
                       }`}
                     >
-                      Hinweis {num}
-                      <span className="block text-[10px] opacity-75">{num}.mp3</span>
+                      <span className="font-bold">#{num}</span>
+                      <span className="block text-[9.5px] opacity-75">{num}.mp3</span>
                     </button>
                   ))}
                 </div>
@@ -302,16 +302,16 @@ export const OrganizerModal: React.FC<OrganizerModalProps> = ({
               )}
               <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300">
                 <p>
-                  <strong>Audiodatei-Namen:</strong> Die App sucht nach <code>1.mp3</code>, <code>2.mp3</code>, <code>3.mp3</code> usw. Vorinstallierte Töne sind bereits enthalten, damit alles sofort ausprobiert werden kann!
+                  <strong>Audiodatei-Namen:</strong> Die App sucht nach <code>1.mp3</code>, <code>2.mp3</code> ... bis <code>{settings.totalClues}.mp3</code>. Vorinstallierte Beispieltöne sind enthalten; fehlt eine Datei, spielt Mortimer automatisch eine geheimnisvolle Synth-Melodie ab.
                 </p>
                 <p className="mt-1">
                   Du kannst eigene Sprachaufnahmen auch direkt hier von diesem Smartphone oder Tablet hochladen, ganz ohne Programmierkenntnisse.
                 </p>
               </div>
 
-              {/* Clues 1 to 5 list with tester and upload */}
-              <div className="space-y-2">
-                {[1, 2, 3, 4, 5].map((clueNum) => {
+              {/* Clues list with tester and upload */}
+              <div className="space-y-2 max-h-[52vh] overflow-y-auto pr-1">
+                {Array.from({ length: settings.totalClues || 20 }, (_, i) => i + 1).map((clueNum) => {
                   const customUpload = audioUploads[clueNum];
                   const isTesting = testingAudioIndex === clueNum;
 
@@ -392,7 +392,7 @@ export const OrganizerModal: React.FC<OrganizerModalProps> = ({
                 </span>
                 <ol className="list-decimal list-inside space-y-1.5 text-blue-800 dark:text-blue-200">
                   <li>Nimm deine Sprach-Hinweise auf dem Smartphone oder Computer auf.</li>
-                  <li>Benenne die Dateien: <code>1.mp3</code>, <code>2.mp3</code>, <code>3.mp3</code> usw.</li>
+                  <li>Benenne die Dateien: <code>1.mp3</code>, <code>2.mp3</code> ... bis <code>{settings.totalClues}.mp3</code>.</li>
                   <li>Lege sie in den <code>public/</code> Ordner deines Projekts.</li>
                   <li>Veröffentliche auf GitHub Pages (das Projekt ist mit relativen Pfaden <code>./</code> vorkonfiguriert).</li>
                 </ol>
@@ -466,6 +466,55 @@ export const OrganizerModal: React.FC<OrganizerModalProps> = ({
                   }
                   className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
                 />
+              </div>
+
+              {/* Total Clues Setting */}
+              <div className="p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div>
+                    <span className="text-xs font-semibold block text-gray-800 dark:text-gray-200">
+                      Anzahl der Stationen / Audio-Hinweise
+                    </span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Standard: 20 Audiodateien (<code>1.mp3</code> bis <code>20.mp3</code>)
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-0.5 rounded-lg">
+                    {settings.totalClues}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="range"
+                    min="1"
+                    max="30"
+                    step="1"
+                    value={settings.totalClues}
+                    onChange={(e) =>
+                      onUpdateSettings({
+                        ...settings,
+                        totalClues: Math.max(1, parseInt(e.target.value, 10) || 20),
+                      })
+                    }
+                    className="flex-1 accent-emerald-600 cursor-pointer"
+                  />
+                  <div className="flex items-center gap-1">
+                    {[5, 10, 15, 20].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => onUpdateSettings({ ...settings, totalClues: preset })}
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium border ${
+                          settings.totalClues === preset
+                            ? 'bg-emerald-600 text-white border-emerald-600'
+                            : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Kid / Team Name */}

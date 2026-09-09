@@ -7,7 +7,7 @@ const STORAGE_CLUE_INDEX_KEY = 'treasure_hunt_clue_index';
 export const DEFAULT_SETTINGS: HuntSettings = {
   kidName: 'Detektiv-Team',
   huntTitle: 'Die geheime Geburtstags-Schnitzeljagd',
-  totalClues: 5,
+  totalClues: 20,
   soundEffects: true,
   autoPlayIncoming: true,
   theme: 'whatsapp',
@@ -17,6 +17,21 @@ export const DEFAULT_SETTINGS: HuntSettings = {
     3: 'Spuren im Garten',
     4: 'Unter der alten Eiche',
     5: 'Die verborgene Schatztruhe',
+    6: 'Der geheimnisvolle Schlüssel',
+    7: 'Rätsel auf dem Dachboden',
+    8: 'Die alte Standuhr',
+    9: 'Der geheime Buchrücken',
+    10: 'Botschaft im Zauberspiegel',
+    11: 'Schritte im Treppenhaus',
+    12: 'Die verschlossene Kiste',
+    13: 'Die leuchtende Laterne',
+    14: 'Im Kellergewölbe',
+    15: 'Der alte Kompass',
+    16: 'Das flüsternde Gemälde',
+    17: 'Spuren am Brunnen',
+    18: 'Die magische Geheimtür',
+    19: 'Das letzte große Rätsel',
+    20: 'Der legendäre Schatz',
   },
 };
 
@@ -24,7 +39,19 @@ export function getStoredSettings(): HuntSettings {
   try {
     const data = localStorage.getItem(STORAGE_SETTINGS_KEY);
     if (data) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+      const parsed = JSON.parse(data);
+      // Migrate old default of 5 to new default of 20
+      if (parsed.totalClues === 5) {
+        parsed.totalClues = 20;
+      }
+      return {
+        ...DEFAULT_SETTINGS,
+        ...parsed,
+        clueLabels: {
+          ...DEFAULT_SETTINGS.clueLabels,
+          ...(parsed.clueLabels || {}),
+        },
+      };
     }
   } catch {
     // fallback
