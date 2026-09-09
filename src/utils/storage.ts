@@ -76,8 +76,26 @@ export function getStoredMessages(): ChatMessage[] | null {
 export function saveMessages(messages: ChatMessage[]) {
   try {
     localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(messages));
-  } catch {
-    // fallback
+  } catch (err) {
+    console.warn('LocalStorage quota limit reached while saving messages, attempting fallback pruning...', err);
+    try {
+      // If quota exceeded, preserve the last 30 messages
+      const trimmed = messages.slice(-30);
+      localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(trimmed));
+    } catch {
+      // If still failing, keep messages without heavy image data for older messages
+      try {
+        const lightweight = messages.map((m, idx) => {
+          if (idx < messages.length - 5 && m.imageUrl) {
+            return { ...m, imageUrl: undefined, text: m.text || '[Foto]' };
+          }
+          return m;
+        });
+        localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(lightweight));
+      } catch {
+        // Ignore fallback failure
+      }
+    }
   }
 }
 

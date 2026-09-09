@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { Send, Smile, Paperclip, Camera, Mic, Compass, Sparkles, Key } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Send, Smile, Paperclip, Camera, Sparkles } from 'lucide-react';
+import { compressImageFile } from '../utils/imageUtils';
+import { ImagePreviewModal } from './ImagePreviewModal';
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void;
+  onSendImage?: (imageUrl: string, caption?: string) => void;
   disabled?: boolean;
   theme: 'whatsapp' | 'telegram' | 'whatsapp-dark';
   currentClueNumber: number;
@@ -19,12 +22,18 @@ const SUGGESTIONS = [
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
+  onSendImage,
   disabled = false,
   theme,
   currentClueNumber,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = () => {
     if (disabled) return;
@@ -45,6 +54,56 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setInputValue((prev) => prev + emoji);
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    try {
+      setIsProcessingImage(true);
+      const compressedUrl = await compressImageFile(file);
+      setPendingImageUrl(compressedUrl);
+    } catch (err) {
+      console.error('Fehler beim Verarbeiten des Bildes:', err);
+      alert('Das Bild konnte nicht geladen werden. Bitte versuche ein anderes Bildformat.');
+    } finally {
+      setIsProcessingImage(false);
+      // Reset input value so re-selecting the same file works
+      e.target.value = '';
+    }
+  };
+
+  const handleSendPendingImage = (caption?: string) => {
+    if (!pendingImageUrl || !onSendImage) return;
+    onSendImage(pendingImageUrl, caption);
+    setPendingImageUrl(null);
+  };
+
+  // Allow pasting an image from clipboard
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          try {
+            setIsProcessingImage(true);
+            const compressedUrl = await compressImageFile(file);
+            setPendingImageUrl(compressedUrl);
+          } catch (err) {
+            console.error('Fehler beim Einfügen des Bildes:', err);
+          } finally {
+            setIsProcessingImage(false);
+          }
+          break;
+        }
+      }
+    }
+  };
+
   const containerBg =
     theme === 'whatsapp-dark'
       ? 'bg-[#1f2c34] border-t border-gray-800'
@@ -62,6 +121,36 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div className={`${containerBg} p-2 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:p-2.5 sm:pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 select-none relative transition-colors duration-200`}>
+      {/* Hidden File Inputs for Gallery and Native Camera */}
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        aria-label="Bild aus Galerie auswählen"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        aria-label="Foto mit Kamera aufnehmen"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Image Preview Modal when an image is selected */}
+      {pendingImageUrl && (
+        <ImagePreviewModal
+          imageUrl={pendingImageUrl}
+          onSend={handleSendPendingImage}
+          onCancel={() => setPendingImageUrl(null)}
+          theme={theme}
+          currentClueNumber={currentClueNumber}
+        />
+      )}
+
       {/* Quick Suggestion Chips for Kids */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none text-xs">
         <span className="text-gray-400 dark:text-gray-500 font-medium shrink-0 flex items-center gap-1 pl-1">
@@ -117,33 +206,38 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={disabled}
+            onPaste={handlePaste}
+            disabled={disabled || isProcessingImage}
             placeholder={
-              disabled
+              isProcessingImage
+                ? 'Bild wird vorbereitet...'
+                : disabled
                 ? 'Mortimer nimmt den Sprach-Hinweis auf...'
-                : `Nachricht an Mortimer oder tippen für Hinweis #${currentClueNumber}...`
+                : `Nachricht an Mortimer oder Foto senden...`
             }
             className="flex-1 bg-transparent border-none outline-hidden text-sm sm:text-[15px] min-w-0"
           />
 
-          {/* Attachment button */}
+          {/* Attachment button -> Opens gallery file picker */}
           <button
             type="button"
-            aria-label="Datei anhängen"
-            onClick={() => setInputValue('Wir haben die Schatzkarte entziffert! 🗺️')}
-            title="Schatzkarte erwähnen"
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2 transition-colors"
+            aria-label="Bild aus Galerie auswählen"
+            disabled={disabled || isProcessingImage}
+            onClick={() => galleryInputRef.current?.click()}
+            title="Bild von Smartphone auswählen"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2 transition-colors active:scale-95 disabled:opacity-50"
           >
             <Paperclip className="w-5 h-5 -rotate-45" />
           </button>
 
-          {/* Camera button */}
+          {/* Camera button -> Opens smartphone camera or photo library */}
           <button
             type="button"
-            aria-label="Kamera"
-            onClick={() => setInputValue('Hier ist ein Beweisfoto von unserem Fund! 📸')}
-            title="Beweisfoto erwähnen"
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2.5 transition-colors hidden xs:block"
+            aria-label="Foto aufnehmen oder auswählen"
+            disabled={disabled || isProcessingImage}
+            onClick={() => cameraInputRef.current?.click()}
+            title="Foto mit Kamera aufnehmen"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2.5 transition-colors active:scale-95 disabled:opacity-50"
           >
             <Camera className="w-5 h-5" />
           </button>
@@ -154,16 +248,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           type="button"
           aria-label="Nachricht senden für Sprach-Hinweis"
           onClick={handleSend}
-          disabled={disabled}
+          disabled={disabled || isProcessingImage}
           title={`Tippen, um Hinweis #${currentClueNumber} anzufordern`}
           className={`${sendBtnBg} text-white w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0 disabled:opacity-60 disabled:cursor-not-allowed`}
         >
-          {inputValue.trim() ? (
-            <Send className="w-5 h-5 ml-0.5" />
-          ) : (
-            // Prominent Send / Voice prompt button
-            <Send className="w-5 h-5 ml-0.5" />
-          )}
+          <Send className="w-5 h-5 ml-0.5" />
         </button>
       </div>
     </div>

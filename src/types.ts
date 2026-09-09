@@ -1,6 +1,6 @@
 export type MessageSender = 'user' | 'mortimer';
 
-export type MessageType = 'voice' | 'text';
+export type MessageType = 'voice' | 'text' | 'image';
 
 export interface ChatMessage {
   id: string;
@@ -9,6 +9,7 @@ export interface ChatMessage {
   senderAvatar?: string;
   type: MessageType;
   text?: string;
+  imageUrl?: string;
   audioFile?: string; // e.g. "1.mp3", "2.mp3"
   customAudioUrl?: string; // blob URL if parent uploaded audio directly
   clueNumber?: number;

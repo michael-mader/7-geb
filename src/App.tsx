@@ -5,6 +5,7 @@ import { ChatMessage, HuntSettings, AudioUploadMap } from './types';
 import { ChatHeader } from './components/ChatHeader';
 import { VoiceMessageBubble } from './components/VoiceMessageBubble';
 import { TextMessageBubble } from './components/TextMessageBubble';
+import { ImageMessageBubble } from './components/ImageMessageBubble';
 import { ChatInput } from './components/ChatInput';
 import { ContactProfileModal } from './components/ContactProfileModal';
 import { OrganizerModal } from './components/OrganizerModal';
@@ -96,21 +97,8 @@ export default function App() {
     return now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Handle Send: User sends message -> Mortimer records and responds with next voice message
-  const handleSendMessage = (text: string) => {
-    if (isBusy) return;
-
-    const userMsgId = `user-${Date.now()}`;
-    const userMessage: ChatMessage = {
-      id: userMsgId,
-      sender: 'user',
-      senderName: settings.kidName || 'Detektiv-Team',
-      type: 'text',
-      text,
-      timestamp: getCurrentTimeFormatted(),
-      status: 'sent',
-    };
-
+  // Common flow when user sends a message (text or image)
+  const triggerUserResponse = (userMessage: ChatMessage) => {
     // 1. Append user message
     setMessages((prev) => [...prev, userMessage]);
     playNotificationSound('sent', settings.soundEffects);
@@ -121,7 +109,7 @@ export default function App() {
     const t1 = setTimeout(() => {
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === userMsgId ? { ...msg, status: 'read' } : msg
+          msg.id === userMessage.id ? { ...msg, status: 'read' } : msg
         )
       );
     }, 450);
@@ -179,6 +167,44 @@ export default function App() {
     }, 2400);
 
     activeTimeoutsRef.current.push(t1, t2, t3, t4);
+  };
+
+  // Handle Send: User sends text message -> Mortimer records and responds with next voice message
+  const handleSendMessage = (text: string) => {
+    if (isBusy) return;
+
+    const userMsgId = `user-${Date.now()}`;
+    const userMessage: ChatMessage = {
+      id: userMsgId,
+      sender: 'user',
+      senderName: settings.kidName || 'Detektiv-Team',
+      type: 'text',
+      text,
+      timestamp: getCurrentTimeFormatted(),
+      status: 'sent',
+    };
+
+    triggerUserResponse(userMessage);
+  };
+
+  // Handle Send Image: User sends a photo selected from their smartphone
+  const handleSendImage = (imageUrl: string, caption?: string) => {
+    if (isBusy) return;
+
+    const userMsgId = `user-img-${Date.now()}`;
+    const userMessage: ChatMessage = {
+      id: userMsgId,
+      sender: 'user',
+      senderName: settings.kidName || 'Detektiv-Team',
+      type: 'image',
+      imageUrl,
+      caption: caption || undefined,
+      text: caption || undefined,
+      timestamp: getCurrentTimeFormatted(),
+      status: 'sent',
+    };
+
+    triggerUserResponse(userMessage);
   };
 
   // Reset Hunt back to initial state
@@ -406,6 +432,12 @@ export default function App() {
                   message={msg}
                   theme={settings.theme}
                 />
+              ) : msg.type === 'image' ? (
+                <ImageMessageBubble
+                  key={msg.id}
+                  message={msg}
+                  theme={settings.theme}
+                />
               ) : (
                 <TextMessageBubble
                   key={msg.id}
@@ -432,6 +464,7 @@ export default function App() {
         {/* Chat Input Bar */}
         <ChatInput
           onSendMessage={handleSendMessage}
+          onSendImage={handleSendImage}
           disabled={isBusy}
           theme={settings.theme}
           currentClueNumber={clueIndex}
